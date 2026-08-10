@@ -77,10 +77,17 @@ cagr = (end_value / initial_capital) ** (1 / years) - 1
 drawdown = data["equity"] / data["equity"].cummax() - 1
 max_drawdown = drawdown.min()
 
-print("\nPerformance")
+trades = data[
+    data["position"].ne(data["position"].shift())
+][
+    [
+        "time",
+        "ratio",
+        "signal",
+        "position"
+    ]
+]
+
+print("\nPosition Changes")
 print("--------------------")
-print(f"Initial Capital : ₹{initial_capital:,.2f}")
-print(f"Final Equity    : ₹{end_value:,.2f}")
-print(f"Absolute Return : {absolute_return:.2%}")
-print(f"CAGR            : {cagr:.2%}")
-print(f"Max Drawdown    : {max_drawdown:.2%}")
+print(trades.head(10).to_string(index=False))
