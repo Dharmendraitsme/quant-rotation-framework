@@ -90,6 +90,79 @@ cagr = (end_value / initial_capital) ** (1 / years) - 1
 drawdown = data["equity"] / data["equity"].cummax() - 1
 max_drawdown = drawdown.min()
 
+running_max = data["equity"].cummax()
+
+drawdown = (
+    data["equity"] / running_max - 1
+)
+
+in_drawdown = drawdown < 0
+
+groups = (~in_drawdown).cumsum()
+
+drawdown_duration = (
+    data.loc[in_drawdown]
+    .groupby(groups[in_drawdown])
+    .size()
+)
+
+max_drawdown_duration = (
+    drawdown_duration.max()
+    if not drawdown_duration.empty
+    else 0
+)
+
+print(
+    f"Max Drawdown Duration : "
+    f"{max_drawdown_duration} trading days"
+)
+
+annualized_volatility = (
+    data["strategy_return_after_cost"].std()
+    * (252 ** 0.5)
+)
+
+sharpe_ratio = (
+    data["strategy_return_after_cost"].mean()
+    / data["strategy_return_after_cost"].std()
+    * (252 ** 0.5)
+)
+
+downside_returns = data.loc[
+    data["strategy_return_after_cost"] < 0,
+    "strategy_return_after_cost"
+]
+
+downside_deviation = downside_returns.std() * (252 ** 0.5)
+
+downside_returns = data.loc[
+    data["strategy_return_after_cost"] < 0,
+    "strategy_return_after_cost"
+]
+
+downside_deviation = downside_returns.std() * (252 ** 0.5)
+
+sortino_ratio = (
+    data["strategy_return_after_cost"].mean()
+    / downside_returns.std()
+    * (252 ** 0.5)
+)
+
+calmar_ratio = (
+    cagr / abs(max_drawdown)
+)
+
+print(f"Calmar Ratio          : {calmar_ratio:.2f}")
+
+print(f"Sortino Ratio         : {sortino_ratio:.2f}")
+
+print(f"Sharpe Ratio          : {sharpe_ratio:.2f}")
+
+print(
+    f"Annualized Volatility : "
+    f"{annualized_volatility:.2%}"
+)
+
 trades = data[
     data["position"].ne(data["position"].shift())
 ][
