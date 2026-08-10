@@ -4,6 +4,8 @@ from src.data_loader import load_data
 
 data = load_data()
 
+transaction_cost = 0.001
+
 data["ratio"] = data["close_nifty"] / data["close_gold"]
 
 data["previous_20_high"] = (
@@ -32,7 +34,21 @@ data["nifty_return"] = data["open_nifty"].shift(-1) / data["open_nifty"] - 1
 
 data["gold_return"] = data["open_gold"].shift(-1) / data["open_gold"] - 1
 
-data["held_position"] = data["position"].shift(1)
+data["held_position"] = (data["position"].shift(1).fillna(0).astype(int))
+
+data["held_position_change"] = data["held_position"].diff().abs()
+
+data["cost"] = 0.0
+
+data.loc[
+    data["held_position_change"] == 1,
+    "cost"
+] = transaction_cost
+
+data.loc[
+    data["held_position_change"] == 2,
+    "cost"
+] = transaction_cost * 2
 
 data["strategy_return"] = 0.0
 
@@ -46,11 +62,15 @@ data.loc[
     "strategy_return"
 ] = data["gold_return"]
 
+data["strategy_return_after_cost"] = (
+    data["strategy_return"] - data["cost"]
+)
+
 initial_capital = 100_000
 
 data["equity"] = (
     initial_capital
-    * (1 + data["strategy_return"]).cumprod()
+    * (1 + data["strategy_return_after_cost"]).cumprod()
 )
 start_value = data["equity"].iloc[0]
 end_value = data["equity"].iloc[-2]
@@ -78,6 +98,10 @@ trades = data[
     ]
 ]
 
+number_of_trades = (data["position"] != data["position"].shift()).sum() - 1
+
+print(f"Number of Trades: {number_of_trades}")
+
 print("\nPerformance")
 print("--------------------")
 print(f"Initial Capital : ₹{initial_capital:,.2f}")
@@ -85,3 +109,4 @@ print(f"Final Equity    : ₹{end_value:,.2f}")
 print(f"Absolute Return : {absolute_return:.2%}")
 print(f"CAGR            : {cagr:.2%}")
 print(f"Max Drawdown    : {max_drawdown:.2%}")
+
