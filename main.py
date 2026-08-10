@@ -1,18 +1,8 @@
 import pandas as pd
+from src.data_loader import load_data
 
-nifty = pd.read_csv("data/raw/NSE_NIFTYBEES.csv")
-gold = pd.read_csv("data/raw/NSE_GOLDBEES.csv")
 
-nifty["time"] = pd.to_datetime(nifty["time"], dayfirst=True)
-gold["time"] = pd.to_datetime(gold["time"], dayfirst=True)
-
-data = pd.merge(
-    nifty[["time","open", "close"]],
-    gold[["time", "open","close"]],
-    on="time",
-    how="inner",
-    suffixes=("_nifty", "_gold")
-)
+data = load_data()
 
 data["ratio"] = data["close_nifty"] / data["close_gold"]
 
@@ -88,6 +78,10 @@ trades = data[
     ]
 ]
 
-print("\nPosition Changes")
+print("\nPerformance")
 print("--------------------")
-print(trades.head(10).to_string(index=False))
+print(f"Initial Capital : ₹{initial_capital:,.2f}")
+print(f"Final Equity    : ₹{end_value:,.2f}")
+print(f"Absolute Return : {absolute_return:.2%}")
+print(f"CAGR            : {cagr:.2%}")
+print(f"Max Drawdown    : {max_drawdown:.2%}")
