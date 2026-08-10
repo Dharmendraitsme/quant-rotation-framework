@@ -5,6 +5,7 @@ from src.data_loader import load_data
 data = load_data()
 
 transaction_cost = 0.001
+slippage = 0.0005
 
 data["ratio"] = data["close_nifty"] / data["close_gold"]
 
@@ -40,15 +41,17 @@ data["held_position_change"] = data["held_position"].diff().abs()
 
 data["cost"] = 0.0
 
+execution_cost = transaction_cost + slippage
+
 data.loc[
     data["held_position_change"] == 1,
     "cost"
-] = transaction_cost
+] = execution_cost
 
 data.loc[
     data["held_position_change"] == 2,
     "cost"
-] = transaction_cost * 2
+] = execution_cost * 2
 
 data["strategy_return"] = 0.0
 
