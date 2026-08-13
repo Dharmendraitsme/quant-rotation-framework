@@ -351,6 +351,28 @@ balanced_volatility = (
 )
 
 # ============================================================
+# 22. BENCHMARK MAX DRAWDOWN
+# ============================================================
+
+nifty_drawdown = (
+    nifty_equity / nifty_equity.cummax()
+) - 1
+
+gold_drawdown = (
+    gold_equity / gold_equity.cummax()
+) - 1
+
+balanced_drawdown = (
+    balanced_equity / balanced_equity.cummax()
+) - 1
+
+nifty_max_drawdown = nifty_drawdown.min()
+
+gold_max_drawdown = gold_drawdown.min()
+
+balanced_max_drawdown = balanced_drawdown.min()
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -490,6 +512,21 @@ print(
 print(
     f"50/50 Volatility       : "
     f"{balanced_volatility:.2%}"
+)
+
+print(
+    f"NIFTYBEES Max Drawdown : "
+    f"{nifty_max_drawdown:.2%}"
+)
+
+print(
+    f"GOLDBEES Max Drawdown  : "
+    f"{gold_max_drawdown:.2%}"
+)
+
+print(
+    f"50/50 Max Drawdown     : "
+    f"{balanced_max_drawdown:.2%}"
 )
 
 print("============================================================")
