@@ -321,29 +321,112 @@ gold_volatility = (
     * (252 ** 0.5)
 )
 
+# Create month identifier for monthly rebalancing
+data["month"] = data["time"].dt.to_period("M")
+
 # ============================================================
-# 21. 50/50 NIFTYBEES + GOLDBEES BENCHMARK
+# 21. MONTHLY-REBALANCED 50/50 BENCHMARK
 # ============================================================
 
-# Equal allocation between NIFTYBEES and GOLDBEES
+data["month"] = data["time"].dt.to_period("M")
 
-balanced_return = (
-    0.50 * data["nifty_return"]
-    + 0.50 * data["gold_return"]
+nifty_value = initial_capital * 0.50
+gold_value = initial_capital * 0.50
+
+balanced_equity_values = []
+
+current_month = None
+
+for i in range(len(data)):
+
+    row = data.iloc[i]
+
+    # Stop at the final incomplete return
+    if pd.isna(row["nifty_return"]) or pd.isna(row["gold_return"]):
+        break
+
+    # Rebalance at the beginning of each new month
+    if current_month != row["month"]:
+
+        total_value = nifty_value + gold_value
+
+        target_nifty = total_value * 0.50
+        target_gold = total_value * 0.50
+
+        # Amount traded during rebalancing
+        nifty_trade = abs(target_nifty - nifty_value)
+        gold_trade = abs(target_gold - gold_value)
+
+        total_traded = (
+            nifty_trade + gold_trade
+        )
+
+        # Apply transaction cost + slippage
+        rebalance_cost = (
+            total_traded
+            / total_value
+            * execution_cost
+        )
+
+        total_value_after_cost = (
+            total_value * (1 - rebalance_cost)
+        )
+
+        # Rebalance after paying costs
+        nifty_value = (
+            total_value_after_cost * 0.50
+        )
+
+        gold_value = (
+            total_value_after_cost * 0.50
+        )
+
+        current_month = row["month"]
+
+    # Apply daily returns
+    nifty_value *= (
+        1 + row["nifty_return"]
+    )
+
+    gold_value *= (
+        1 + row["gold_return"]
+    )
+
+    balanced_equity_values.append(
+        nifty_value + gold_value
+    )
+
+
+# Create benchmark equity series
+
+balanced_equity = pd.Series(
+    balanced_equity_values,
+    index=data.index[:len(balanced_equity_values)]
 )
 
-balanced_equity = (
-    initial_capital
-    * (1 + balanced_return).cumprod()
-)
+
+# Final equity
 
 balanced_final_equity = (
-    balanced_equity.iloc[-2]
+    balanced_equity.iloc[-1]
 )
+
+
+# CAGR
 
 balanced_cagr = (
     balanced_final_equity / initial_capital
 ) ** (1 / years) - 1
+
+
+# Daily benchmark returns
+
+balanced_return = (
+    balanced_equity.pct_change()
+)
+
+
+# Annualized volatility
 
 balanced_volatility = (
     balanced_return.std()
