@@ -321,6 +321,34 @@ gold_volatility = (
     * (252 ** 0.5)
 )
 
+# ============================================================
+# 21. 50/50 NIFTYBEES + GOLDBEES BENCHMARK
+# ============================================================
+
+# Equal allocation between NIFTYBEES and GOLDBEES
+
+balanced_return = (
+    0.50 * data["nifty_return"]
+    + 0.50 * data["gold_return"]
+)
+
+balanced_equity = (
+    initial_capital
+    * (1 + balanced_return).cumprod()
+)
+
+balanced_final_equity = (
+    balanced_equity.iloc[-2]
+)
+
+balanced_cagr = (
+    balanced_final_equity / initial_capital
+) ** (1 / years) - 1
+
+balanced_volatility = (
+    balanced_return.std()
+    * (252 ** 0.5)
+)
 
 # ============================================================
 # 21. RESULTS
@@ -445,6 +473,23 @@ print(
 print(
     f"GOLDBEES Volatility    : "
     f"{gold_volatility:.2%}"
+)
+
+print()
+
+print(
+    f"50/50 Final Equity     : "
+    f"₹{balanced_final_equity:,.2f}"
+)
+
+print(
+    f"50/50 CAGR             : "
+    f"{balanced_cagr:.2%}"
+)
+
+print(
+    f"50/50 Volatility       : "
+    f"{balanced_volatility:.2%}"
 )
 
 print("============================================================")
