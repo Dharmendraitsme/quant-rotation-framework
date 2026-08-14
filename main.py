@@ -735,6 +735,53 @@ gold_average_trade = (
 )
 
 # ============================================================
+# 29. HOLDING PERIOD BY ASSET
+# ============================================================
+
+nifty_holding_periods = []
+gold_holding_periods = []
+
+for i in range(len(trade_changes) - 1):
+
+    start_index = trade_changes.index[i]
+    end_index = trade_changes.index[i + 1]
+
+    position = data.loc[
+        start_index,
+        "held_position"
+    ]
+
+    holding_days = (
+        data.loc[end_index, "time"]
+        - data.loc[start_index, "time"]
+    ).days
+
+    if position == 1:
+        nifty_holding_periods.append(
+            holding_days
+        )
+
+    elif position == -1:
+        gold_holding_periods.append(
+            holding_days
+        )
+
+
+average_nifty_holding = (
+    sum(nifty_holding_periods)
+    / len(nifty_holding_periods)
+    if nifty_holding_periods
+    else 0
+)
+
+average_gold_holding = (
+    sum(gold_holding_periods)
+    / len(gold_holding_periods)
+    if gold_holding_periods
+    else 0
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -921,6 +968,16 @@ print(
 print(
     f"GOLDBEES Avg Return   : "
     f"{gold_average_trade:.2%}"
+)
+
+print(
+    f"NIFTYBEES Avg Holding : "
+    f"{average_nifty_holding:.1f} days"
+)
+
+print(
+    f"GOLDBEES Avg Holding  : "
+    f"{average_gold_holding:.1f} days"
 )
 
 print()
