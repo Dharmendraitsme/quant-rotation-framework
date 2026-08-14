@@ -434,6 +434,66 @@ balanced_volatility = (
 )
 
 # ============================================================
+# 22. BENCHMARK SHARPE RATIOS
+# ============================================================
+
+nifty_sharpe = (
+    data["nifty_return"].mean()
+    / data["nifty_return"].std()
+    * (252 ** 0.5)
+)
+
+gold_sharpe = (
+    data["gold_return"].mean()
+    / data["gold_return"].std()
+    * (252 ** 0.5)
+)
+
+balanced_sharpe = (
+    balanced_return.mean()
+    / balanced_return.std()
+    * (252 ** 0.5)
+)
+
+# ============================================================
+# 23. BENCHMARK SORTINO RATIOS
+# ============================================================
+
+nifty_downside = data.loc[
+    data["nifty_return"] < 0,
+    "nifty_return"
+]
+
+gold_downside = data.loc[
+    data["gold_return"] < 0,
+    "gold_return"
+]
+
+balanced_downside = balanced_return[
+    balanced_return < 0
+]
+
+nifty_sortino = (
+    data["nifty_return"].mean()
+    / nifty_downside.std()
+    * (252 ** 0.5)
+)
+
+gold_sortino = (
+    data["gold_return"].mean()
+    / gold_downside.std()
+    * (252 ** 0.5)
+)
+
+balanced_sortino = (
+    balanced_return.mean()
+    / balanced_downside.std()
+    * (252 ** 0.5)
+)
+
+
+
+# ============================================================
 # 22. BENCHMARK MAX DRAWDOWN
 # ============================================================
 
@@ -611,5 +671,38 @@ print(
     f"50/50 Max Drawdown     : "
     f"{balanced_max_drawdown:.2%}"
 )
+
+print()
+
+print(
+    f"NIFTYBEES Sharpe       : "
+    f"{nifty_sharpe:.2f}"
+)
+
+print(
+    f"NIFTYBEES Sortino      : "
+    f"{nifty_sortino:.2f}"
+)
+
+print(
+    f"GOLDBEES Sharpe        : "
+    f"{gold_sharpe:.2f}"
+)
+
+print(
+    f"GOLDBEES Sortino       : "
+    f"{gold_sortino:.2f}"
+)
+
+print(
+    f"50/50 Sharpe           : "
+    f"{balanced_sharpe:.2f}"
+)
+
+print(
+    f"50/50 Sortino          : "
+    f"{balanced_sortino:.2f}"
+)
+
 
 print("============================================================")
