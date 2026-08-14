@@ -17,6 +17,7 @@ from src.benchmarks import (
 from src.trade_analysis import analyze_trades
 from src.robustness import run_robustness_test
 from src.validation import run_out_of_sample_test
+from src.validation import run_walk_forward_test
 
 # ============================================================
 # SETTINGS
@@ -262,6 +263,34 @@ print(
     f"Out-of-Sample Trades : "
     f"{oos_trades['completed_trades']}"
 )
+
+# ============================================================
+# 10. WALK-FORWARD VALIDATION
+# ============================================================
+
+WALK_FORWARD_LOOKBACK = 15
+
+walk_forward_results = run_walk_forward_test(
+    data,
+    lookback=WALK_FORWARD_LOOKBACK,
+    initial_capital=INITIAL_CAPITAL,
+    transaction_cost=TRANSACTION_COST,
+    slippage=SLIPPAGE,
+)
+
+print()
+print("Walk-Forward Validation")
+print("--------------------")
+
+for result in walk_forward_results:
+
+    print(
+        f"Fold {result['Fold']} | "
+        f"CAGR: {result['CAGR']:.2%} | "
+        f"Sharpe: {result['Sharpe']:.2f} | "
+        f"Max DD: {result['Max Drawdown']:.2%} | "
+        f"Trades: {result['Trades']}"
+    )
 
 # ============================================================
 # 10. RESULTS
