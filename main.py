@@ -14,6 +14,10 @@ from src.benchmarks import (
     calculate_single_asset_benchmark,
     calculate_50_50_benchmark,
 )
+from src.regime import (
+    classify_market_regime,
+    analyze_regimes,
+)
 from src.trade_analysis import analyze_trades
 from src.robustness import run_robustness_test
 from src.validation import run_out_of_sample_test
@@ -291,6 +295,33 @@ for result in walk_forward_results:
         f"Max DD: {result['Max Drawdown']:.2%} | "
         f"Trades: {result['Trades']}"
     )
+
+# ============================================================
+# 10. MARKET REGIME ANALYSIS
+# ============================================================
+
+regime_data = classify_market_regime(
+    data
+)
+
+regime_results = analyze_regimes(
+    regime_data
+)
+
+print()
+print("Market Regime Analysis")
+print("--------------------")
+
+print(
+    regime_results.to_string(
+        index=False,
+        formatters={
+            "Return": "{:.2%}".format,
+            "Volatility": "{:.2%}".format,
+            "Sharpe": "{:.2f}".format,
+        },
+    )
+)
 
 # ============================================================
 # 10. RESULTS
