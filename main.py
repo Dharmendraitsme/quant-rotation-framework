@@ -657,6 +657,84 @@ average_holding_period = (
 )
 
 # ============================================================
+# 28. NIFTYBEES vs GOLDBEES TRADE ANALYSIS
+# ============================================================
+
+nifty_trade_returns = []
+gold_trade_returns = []
+
+for i in range(len(trade_changes) - 1):
+
+    start_index = trade_changes.index[i]
+    end_index = trade_changes.index[i + 1]
+
+    position = data.loc[
+        start_index,
+        "held_position"
+    ]
+
+    trade_return = (
+        data.loc[
+            start_index:end_index,
+            "strategy_return_after_cost"
+        ]
+        + 1
+    ).prod() - 1
+
+    if position == 1:
+        nifty_trade_returns.append(trade_return)
+
+    elif position == -1:
+        gold_trade_returns.append(trade_return)
+
+
+nifty_trade_returns = pd.Series(
+    nifty_trade_returns
+)
+
+gold_trade_returns = pd.Series(
+    gold_trade_returns
+)
+
+
+# NIFTYBEES trade statistics
+
+nifty_trade_count = len(
+    nifty_trade_returns
+)
+
+nifty_win_rate = (
+    (nifty_trade_returns > 0).mean()
+    if nifty_trade_count > 0
+    else 0
+)
+
+nifty_average_trade = (
+    nifty_trade_returns.mean()
+    if nifty_trade_count > 0
+    else 0
+)
+
+
+# GOLDBEES trade statistics
+
+gold_trade_count = len(
+    gold_trade_returns
+)
+
+gold_win_rate = (
+    (gold_trade_returns > 0).mean()
+    if gold_trade_count > 0
+    else 0
+)
+
+gold_average_trade = (
+    gold_trade_returns.mean()
+    if gold_trade_count > 0
+    else 0
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -807,6 +885,42 @@ print(
 print(
     f"Average Holding Period: "
     f"{average_holding_period:.1f} calendar days"
+)
+
+print()
+print("Asset Trade Analysis")
+print("--------------------")
+
+print(
+    f"NIFTYBEES Trades      : "
+    f"{nifty_trade_count}"
+)
+
+print(
+    f"NIFTYBEES Win Rate    : "
+    f"{nifty_win_rate:.2%}"
+)
+
+print(
+    f"NIFTYBEES Avg Return  : "
+    f"{nifty_average_trade:.2%}"
+)
+
+print()
+
+print(
+    f"GOLDBEES Trades       : "
+    f"{gold_trade_count}"
+)
+
+print(
+    f"GOLDBEES Win Rate     : "
+    f"{gold_win_rate:.2%}"
+)
+
+print(
+    f"GOLDBEES Avg Return   : "
+    f"{gold_average_trade:.2%}"
 )
 
 print()
