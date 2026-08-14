@@ -22,6 +22,7 @@ from src.trade_analysis import analyze_trades
 from src.robustness import run_robustness_test
 from src.validation import run_out_of_sample_test
 from src.validation import run_walk_forward_test
+from src.reporting import save_results
 
 # ============================================================
 # SETTINGS
@@ -321,6 +322,21 @@ print(
             "Sharpe": "{:.2f}".format,
         },
     )
+)
+
+# ============================================================
+# 10. SAVE RESEARCH RESULTS
+# ============================================================
+
+save_results(
+    performance=performance,
+    trades=trades,
+    nifty_benchmark=nifty_benchmark,
+    gold_benchmark=gold_benchmark,
+    balanced_benchmark=balanced_benchmark,
+    robustness_results=robustness_results,
+    validation=validation,
+    regime_results=regime_results,
 )
 
 # ============================================================
