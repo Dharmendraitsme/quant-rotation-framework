@@ -15,7 +15,7 @@ from src.benchmarks import (
     calculate_50_50_benchmark,
 )
 from src.trade_analysis import analyze_trades
-
+from src.robustness import run_robustness_test
 
 # ============================================================
 # SETTINGS
@@ -146,6 +146,43 @@ number_of_trades = (
     - 1
 )
 
+# ============================================================
+# 9. PARAMETER ROBUSTNESS
+# ============================================================
+
+LOOKBACK_PERIODS = [
+    10,
+    15,
+    20,
+    30,
+    40,
+    60,
+]
+
+robustness_results = run_robustness_test(
+    data,
+    lookback_periods=LOOKBACK_PERIODS,
+    initial_capital=INITIAL_CAPITAL,
+    transaction_cost=TRANSACTION_COST,
+    slippage=SLIPPAGE,
+)
+
+print()
+print("Parameter Robustness")
+print("--------------------")
+
+print(
+    robustness_results.to_string(
+        index=False,
+        formatters={
+            "CAGR": "{:.2%}".format,
+            "Volatility": "{:.2%}".format,
+            "Sharpe": "{:.2f}".format,
+            "Max Drawdown": "{:.2%}".format,
+            "Profit Factor": "{:.2f}".format,
+        },
+    )
+)
 
 # ============================================================
 # 10. RESULTS
