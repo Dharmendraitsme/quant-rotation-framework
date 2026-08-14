@@ -13,10 +13,12 @@ from src.data_loader import load_data
 
 initial_capital = 100_000
 
-transaction_cost = 0.001      # 0.10%
-slippage = 0.0005             # 0.05%
+transaction_cost = 0.001       # 0.10%
+slippage = 0.0005              # 0.05%
 
-execution_cost = transaction_cost + slippage
+execution_cost = (
+    transaction_cost + slippage
+)
 
 
 # ============================================================
@@ -31,7 +33,8 @@ data = load_data()
 # ============================================================
 
 data["ratio"] = (
-    data["close_nifty"] / data["close_gold"]
+    data["close_nifty"]
+    / data["close_gold"]
 )
 
 
@@ -118,7 +121,9 @@ data["held_position"] = (
 # ============================================================
 
 data["held_position_change"] = (
-    data["held_position"].diff().abs()
+    data["held_position"]
+    .diff()
+    .abs()
 )
 
 
@@ -161,7 +166,8 @@ data.loc[
 # ============================================================
 
 data["strategy_return_after_cost"] = (
-    data["strategy_return"] - data["cost"]
+    data["strategy_return"]
+    - data["cost"]
 )
 
 
@@ -171,7 +177,10 @@ data["strategy_return_after_cost"] = (
 
 data["equity"] = (
     initial_capital
-    * (1 + data["strategy_return_after_cost"]).cumprod()
+    * (
+        1
+        + data["strategy_return_after_cost"]
+    ).cumprod()
 )
 
 end_value = data["equity"].iloc[-2]
@@ -201,20 +210,27 @@ cagr = (
 # 15. DRAWDOWN
 # ============================================================
 
-running_max = data["equity"].cummax()
+running_max = (
+    data["equity"].cummax()
+)
 
 drawdown = (
-    data["equity"] / running_max
+    data["equity"]
+    / running_max
 ) - 1
 
-max_drawdown = drawdown.min()
+max_drawdown = (
+    drawdown.min()
+)
 
 
 # ============================================================
 # 16. DRAWDOWN DURATION
 # ============================================================
 
-in_drawdown = drawdown < 0
+in_drawdown = (
+    drawdown < 0
+)
 
 groups = (
     ~in_drawdown
@@ -222,7 +238,9 @@ groups = (
 
 drawdown_duration = (
     data.loc[in_drawdown]
-    .groupby(groups[in_drawdown])
+    .groupby(
+        groups[in_drawdown]
+    )
     .size()
 )
 
@@ -321,69 +339,108 @@ gold_volatility = (
     * (252 ** 0.5)
 )
 
-# Create month identifier for monthly rebalancing
-data["month"] = data["time"].dt.to_period("M")
 
 # ============================================================
 # 21. MONTHLY-REBALANCED 50/50 BENCHMARK
 # ============================================================
 
-data["month"] = data["time"].dt.to_period("M")
+data["month"] = (
+    data["time"]
+    .dt.to_period("M")
+)
 
-nifty_value = initial_capital * 0.50
-gold_value = initial_capital * 0.50
+nifty_value = (
+    initial_capital * 0.50
+)
+
+gold_value = (
+    initial_capital * 0.50
+)
 
 balanced_equity_values = []
 
 current_month = None
 
+
 for i in range(len(data)):
 
     row = data.iloc[i]
 
-    # Stop at the final incomplete return
-    if pd.isna(row["nifty_return"]) or pd.isna(row["gold_return"]):
+    # Stop at final incomplete return
+    if (
+        pd.isna(row["nifty_return"])
+        or pd.isna(row["gold_return"])
+    ):
         break
 
-    # Rebalance at the beginning of each new month
+    # --------------------------------------------------------
+    # Monthly rebalance
+    # --------------------------------------------------------
+
     if current_month != row["month"]:
 
-        total_value = nifty_value + gold_value
+        total_value = (
+            nifty_value
+            + gold_value
+        )
 
-        target_nifty = total_value * 0.50
-        target_gold = total_value * 0.50
+        target_nifty = (
+            total_value * 0.50
+        )
 
-        # Amount traded during rebalancing
-        nifty_trade = abs(target_nifty - nifty_value)
-        gold_trade = abs(target_gold - gold_value)
+        target_gold = (
+            total_value * 0.50
+        )
+
+        nifty_trade = abs(
+            target_nifty - nifty_value
+        )
+
+        gold_trade = abs(
+            target_gold - gold_value
+        )
 
         total_traded = (
-            nifty_trade + gold_trade
+            nifty_trade
+            + gold_trade
         )
 
-        # Apply transaction cost + slippage
-        rebalance_cost = (
-            total_traded
-            / total_value
-            * execution_cost
-        )
+        # Rebalancing execution cost
+        if total_value > 0:
+
+            rebalance_cost = (
+                total_traded
+                / total_value
+                * execution_cost
+            )
+
+        else:
+
+            rebalance_cost = 0.0
 
         total_value_after_cost = (
-            total_value * (1 - rebalance_cost)
+            total_value
+            * (1 - rebalance_cost)
         )
 
-        # Rebalance after paying costs
         nifty_value = (
-            total_value_after_cost * 0.50
+            total_value_after_cost
+            * 0.50
         )
 
         gold_value = (
-            total_value_after_cost * 0.50
+            total_value_after_cost
+            * 0.50
         )
 
-        current_month = row["month"]
+        current_month = (
+            row["month"]
+        )
 
-    # Apply daily returns
+    # --------------------------------------------------------
+    # Daily asset returns
+    # --------------------------------------------------------
+
     nifty_value *= (
         1 + row["nifty_return"]
     )
@@ -397,44 +454,66 @@ for i in range(len(data)):
     )
 
 
-# Create benchmark equity series
-
 balanced_equity = pd.Series(
     balanced_equity_values,
-    index=data.index[:len(balanced_equity_values)]
+    index=data.index[
+        :len(balanced_equity_values)
+    ]
 )
-
-
-# Final equity
 
 balanced_final_equity = (
     balanced_equity.iloc[-1]
 )
 
-
-# CAGR
-
 balanced_cagr = (
-    balanced_final_equity / initial_capital
+    balanced_final_equity
+    / initial_capital
 ) ** (1 / years) - 1
-
-
-# Daily benchmark returns
 
 balanced_return = (
     balanced_equity.pct_change()
 )
-
-
-# Annualized volatility
 
 balanced_volatility = (
     balanced_return.std()
     * (252 ** 0.5)
 )
 
+
 # ============================================================
-# 22. BENCHMARK SHARPE RATIOS
+# 22. BENCHMARK DRAWDOWN
+# ============================================================
+
+nifty_drawdown = (
+    nifty_equity
+    / nifty_equity.cummax()
+) - 1
+
+gold_drawdown = (
+    gold_equity
+    / gold_equity.cummax()
+) - 1
+
+balanced_drawdown = (
+    balanced_equity
+    / balanced_equity.cummax()
+) - 1
+
+nifty_max_drawdown = (
+    nifty_drawdown.min()
+)
+
+gold_max_drawdown = (
+    gold_drawdown.min()
+)
+
+balanced_max_drawdown = (
+    balanced_drawdown.min()
+)
+
+
+# ============================================================
+# 23. BENCHMARK SHARPE RATIOS
 # ============================================================
 
 nifty_sharpe = (
@@ -455,8 +534,9 @@ balanced_sharpe = (
     * (252 ** 0.5)
 )
 
+
 # ============================================================
-# 23. BENCHMARK SORTINO RATIOS
+# 24. BENCHMARK SORTINO RATIOS
 # ============================================================
 
 nifty_downside = data.loc[
@@ -469,9 +549,11 @@ gold_downside = data.loc[
     "gold_return"
 ]
 
-balanced_downside = balanced_return[
-    balanced_return < 0
-]
+balanced_downside = (
+    balanced_return[
+        balanced_return < 0
+    ]
+)
 
 nifty_sortino = (
     data["nifty_return"].mean()
@@ -492,35 +574,9 @@ balanced_sortino = (
 )
 
 
-
 # ============================================================
-# 22. BENCHMARK MAX DRAWDOWN
+# 25. TRADE ANALYSIS
 # ============================================================
-
-nifty_drawdown = (
-    nifty_equity / nifty_equity.cummax()
-) - 1
-
-gold_drawdown = (
-    gold_equity / gold_equity.cummax()
-) - 1
-
-balanced_drawdown = (
-    balanced_equity / balanced_equity.cummax()
-) - 1
-
-nifty_max_drawdown = nifty_drawdown.min()
-
-gold_max_drawdown = gold_drawdown.min()
-
-balanced_max_drawdown = balanced_drawdown.min()
-
-# ============================================================
-# 24. TRADE ANALYSIS
-# ============================================================
-
-# A trade starts when the strategy changes from one position
-# to another.
 
 trade_changes = data[
     data["held_position"].ne(
@@ -528,21 +584,23 @@ trade_changes = data[
     )
 ].copy()
 
-
-# Remove the initial position (0)
 trade_changes = trade_changes[
     trade_changes["held_position"] != 0
 ]
 
-
-# Calculate the return of each completed holding period
-
 trade_returns = []
 
-for i in range(len(trade_changes) - 1):
+for i in range(
+    len(trade_changes) - 1
+):
 
-    start_index = trade_changes.index[i]
-    end_index = trade_changes.index[i + 1]
+    start_index = (
+        trade_changes.index[i]
+    )
+
+    end_index = (
+        trade_changes.index[i + 1]
+    )
 
     trade_return = (
         data.loc[
@@ -552,15 +610,18 @@ for i in range(len(trade_changes) - 1):
         + 1
     ).prod() - 1
 
-    trade_returns.append(trade_return)
+    trade_returns.append(
+        trade_return
+    )
 
 
-trade_returns = pd.Series(trade_returns)
+trade_returns = pd.Series(
+    trade_returns
+)
 
-
-# Trade statistics
-
-completed_trades = len(trade_returns)
+completed_trades = (
+    len(trade_returns)
+)
 
 winning_trades = (
     trade_returns > 0
@@ -571,7 +632,8 @@ losing_trades = (
 ).sum()
 
 win_rate = (
-    winning_trades / completed_trades
+    winning_trades
+    / completed_trades
     if completed_trades > 0
     else 0
 )
@@ -582,13 +644,16 @@ average_trade_return = (
     else 0
 )
 
+
 # ============================================================
-# 25. PROFIT FACTOR
+# 26. PROFIT FACTOR
 # ============================================================
 
-gross_profit = trade_returns[
-    trade_returns > 0
-].sum()
+gross_profit = (
+    trade_returns[
+        trade_returns > 0
+    ].sum()
+)
 
 gross_loss = abs(
     trade_returns[
@@ -602,17 +667,22 @@ profit_factor = (
     else float("inf")
 )
 
+
 # ============================================================
-# 26. TRADE EXPECTANCY
+# 27. TRADE EXPECTANCY
 # ============================================================
 
-winning_trade_returns = trade_returns[
-    trade_returns > 0
-]
+winning_trade_returns = (
+    trade_returns[
+        trade_returns > 0
+    ]
+)
 
-losing_trade_returns = trade_returns[
-    trade_returns < 0
-]
+losing_trade_returns = (
+    trade_returns[
+        trade_returns < 0
+    ]
+)
 
 average_winning_trade = (
     winning_trade_returns.mean()
@@ -627,46 +697,66 @@ average_losing_trade = (
 )
 
 expectancy = (
-    win_rate * average_winning_trade
-    + (1 - win_rate) * average_losing_trade
+    win_rate
+    * average_winning_trade
+    + (1 - win_rate)
+    * average_losing_trade
 )
 
+
 # ============================================================
-# 27. AVERAGE HOLDING PERIOD
+# 28. AVERAGE HOLDING PERIOD
 # ============================================================
 
 holding_periods = []
 
-for i in range(len(trade_changes) - 1):
+for i in range(
+    len(trade_changes) - 1
+):
 
-    start_index = trade_changes.index[i]
-    end_index = trade_changes.index[i + 1]
+    start_index = (
+        trade_changes.index[i]
+    )
+
+    end_index = (
+        trade_changes.index[i + 1]
+    )
 
     holding_days = (
         data.loc[end_index, "time"]
         - data.loc[start_index, "time"]
     ).days
 
-    holding_periods.append(holding_days)
-
+    holding_periods.append(
+        holding_days
+    )
 
 average_holding_period = (
-    sum(holding_periods) / len(holding_periods)
+    sum(holding_periods)
+    / len(holding_periods)
     if holding_periods
     else 0
 )
 
+
 # ============================================================
-# 28. NIFTYBEES vs GOLDBEES TRADE ANALYSIS
+# 29. NIFTYBEES vs GOLDBEES TRADE ANALYSIS
 # ============================================================
 
 nifty_trade_returns = []
 gold_trade_returns = []
 
-for i in range(len(trade_changes) - 1):
+for i in range(
+    len(trade_changes) - 1
+):
 
-    start_index = trade_changes.index[i]
-    end_index = trade_changes.index[i + 1]
+    start_index = (
+        trade_changes.index[i]
+    )
+
+    end_index = (
+        trade_changes.index[i + 1]
+    )
 
     position = data.loc[
         start_index,
@@ -682,10 +772,16 @@ for i in range(len(trade_changes) - 1):
     ).prod() - 1
 
     if position == 1:
-        nifty_trade_returns.append(trade_return)
+
+        nifty_trade_returns.append(
+            trade_return
+        )
 
     elif position == -1:
-        gold_trade_returns.append(trade_return)
+
+        gold_trade_returns.append(
+            trade_return
+        )
 
 
 nifty_trade_returns = pd.Series(
@@ -697,10 +793,10 @@ gold_trade_returns = pd.Series(
 )
 
 
-# NIFTYBEES trade statistics
+# NIFTYBEES
 
-nifty_trade_count = len(
-    nifty_trade_returns
+nifty_trade_count = (
+    len(nifty_trade_returns)
 )
 
 nifty_win_rate = (
@@ -716,10 +812,10 @@ nifty_average_trade = (
 )
 
 
-# GOLDBEES trade statistics
+# GOLDBEES
 
-gold_trade_count = len(
-    gold_trade_returns
+gold_trade_count = (
+    len(gold_trade_returns)
 )
 
 gold_win_rate = (
@@ -734,17 +830,25 @@ gold_average_trade = (
     else 0
 )
 
+
 # ============================================================
-# 29. HOLDING PERIOD BY ASSET
+# 30. HOLDING PERIOD BY ASSET
 # ============================================================
 
 nifty_holding_periods = []
 gold_holding_periods = []
 
-for i in range(len(trade_changes) - 1):
+for i in range(
+    len(trade_changes) - 1
+):
 
-    start_index = trade_changes.index[i]
-    end_index = trade_changes.index[i + 1]
+    start_index = (
+        trade_changes.index[i]
+    )
+
+    end_index = (
+        trade_changes.index[i + 1]
+    )
 
     position = data.loc[
         start_index,
@@ -757,11 +861,13 @@ for i in range(len(trade_changes) - 1):
     ).days
 
     if position == 1:
+
         nifty_holding_periods.append(
             holding_days
         )
 
     elif position == -1:
+
         gold_holding_periods.append(
             holding_days
         )
@@ -781,14 +887,37 @@ average_gold_holding = (
     else 0
 )
 
+
 # ============================================================
-# 21. RESULTS
+# 31. BEST AND WORST TRADE
+# ============================================================
+
+best_trade = (
+    trade_returns.max()
+    if not trade_returns.empty
+    else 0
+)
+
+worst_trade = (
+    trade_returns.min()
+    if not trade_returns.empty
+    else 0
+)
+
+
+# ============================================================
+# 32. RESULTS
 # ============================================================
 
 print()
-print("============================================================")
+print("=" * 60)
 print("NIFTYBEES vs GOLDBEES ROTATION STRATEGY")
-print("============================================================")
+print("=" * 60)
+
+
+# ============================================================
+# TRADING ASSUMPTIONS
+# ============================================================
 
 print()
 print("Trading Assumptions")
@@ -819,6 +948,10 @@ print(
     f"{number_of_trades}"
 )
 
+
+# ============================================================
+# ROTATION PERFORMANCE
+# ============================================================
 
 print()
 print("Rotation Strategy")
@@ -869,6 +1002,10 @@ print(
     f"{max_drawdown_duration} trading days"
 )
 
+
+# ============================================================
+# TRADE ANALYSIS
+# ============================================================
 
 print()
 print("Trade Analysis")
@@ -934,6 +1071,21 @@ print(
     f"{average_holding_period:.1f} calendar days"
 )
 
+print(
+    f"Best Trade            : "
+    f"{best_trade:.2%}"
+)
+
+print(
+    f"Worst Trade           : "
+    f"{worst_trade:.2%}"
+)
+
+
+# ============================================================
+# ASSET TRADE ANALYSIS
+# ============================================================
+
 print()
 print("Asset Trade Analysis")
 print("--------------------")
@@ -951,6 +1103,11 @@ print(
 print(
     f"NIFTYBEES Avg Return  : "
     f"{nifty_average_trade:.2%}"
+)
+
+print(
+    f"NIFTYBEES Avg Holding : "
+    f"{average_nifty_holding:.1f} days"
 )
 
 print()
@@ -971,18 +1128,21 @@ print(
 )
 
 print(
-    f"NIFTYBEES Avg Holding : "
-    f"{average_nifty_holding:.1f} days"
-)
-
-print(
     f"GOLDBEES Avg Holding  : "
     f"{average_gold_holding:.1f} days"
 )
 
+
+# ============================================================
+# BENCHMARKS
+# ============================================================
+
 print()
 print("Benchmarks")
 print("--------------------")
+
+
+# NIFTYBEES
 
 print(
     f"NIFTYBEES Final Equity : "
@@ -998,6 +1158,24 @@ print(
     f"NIFTYBEES Volatility   : "
     f"{nifty_volatility:.2%}"
 )
+
+print(
+    f"NIFTYBEES Sharpe       : "
+    f"{nifty_sharpe:.2f}"
+)
+
+print(
+    f"NIFTYBEES Sortino      : "
+    f"{nifty_sortino:.2f}"
+)
+
+print(
+    f"NIFTYBEES Max Drawdown : "
+    f"{nifty_max_drawdown:.2%}"
+)
+
+
+# GOLDBEES
 
 print()
 
@@ -1015,6 +1193,24 @@ print(
     f"GOLDBEES Volatility    : "
     f"{gold_volatility:.2%}"
 )
+
+print(
+    f"GOLDBEES Sharpe        : "
+    f"{gold_sharpe:.2f}"
+)
+
+print(
+    f"GOLDBEES Sortino       : "
+    f"{gold_sortino:.2f}"
+)
+
+print(
+    f"GOLDBEES Max Drawdown  : "
+    f"{gold_max_drawdown:.2%}"
+)
+
+
+# 50/50
 
 print()
 
@@ -1034,43 +1230,6 @@ print(
 )
 
 print(
-    f"NIFTYBEES Max Drawdown : "
-    f"{nifty_max_drawdown:.2%}"
-)
-
-print(
-    f"GOLDBEES Max Drawdown  : "
-    f"{gold_max_drawdown:.2%}"
-)
-
-print(
-    f"50/50 Max Drawdown     : "
-    f"{balanced_max_drawdown:.2%}"
-)
-
-print()
-
-print(
-    f"NIFTYBEES Sharpe       : "
-    f"{nifty_sharpe:.2f}"
-)
-
-print(
-    f"NIFTYBEES Sortino      : "
-    f"{nifty_sortino:.2f}"
-)
-
-print(
-    f"GOLDBEES Sharpe        : "
-    f"{gold_sharpe:.2f}"
-)
-
-print(
-    f"GOLDBEES Sortino       : "
-    f"{gold_sortino:.2f}"
-)
-
-print(
     f"50/50 Sharpe           : "
     f"{balanced_sharpe:.2f}"
 )
@@ -1080,5 +1239,15 @@ print(
     f"{balanced_sortino:.2f}"
 )
 
+print(
+    f"50/50 Max Drawdown     : "
+    f"{balanced_max_drawdown:.2%}"
+)
 
-print("============================================================")
+
+# ============================================================
+# END
+# ============================================================
+
+print()
+print("=" * 60)
