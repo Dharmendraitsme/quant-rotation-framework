@@ -603,6 +603,35 @@ profit_factor = (
 )
 
 # ============================================================
+# 26. TRADE EXPECTANCY
+# ============================================================
+
+winning_trade_returns = trade_returns[
+    trade_returns > 0
+]
+
+losing_trade_returns = trade_returns[
+    trade_returns < 0
+]
+
+average_winning_trade = (
+    winning_trade_returns.mean()
+    if not winning_trade_returns.empty
+    else 0
+)
+
+average_losing_trade = (
+    losing_trade_returns.mean()
+    if not losing_trade_returns.empty
+    else 0
+)
+
+expectancy = (
+    win_rate * average_winning_trade
+    + (1 - win_rate) * average_losing_trade
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -733,6 +762,21 @@ print(
 print(
     f"Profit Factor         : "
     f"{profit_factor:.2f}"
+)
+
+print(
+    f"Average Winning Trade : "
+    f"{average_winning_trade:.2%}"
+)
+
+print(
+    f"Average Losing Trade  : "
+    f"{average_losing_trade:.2%}"
+)
+
+print(
+    f"Trade Expectancy      : "
+    f"{expectancy:.2%}"
 )
 
 print()
