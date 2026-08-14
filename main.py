@@ -16,6 +16,7 @@ from src.benchmarks import (
 )
 from src.trade_analysis import analyze_trades
 from src.robustness import run_robustness_test
+from src.validation import run_out_of_sample_test
 
 # ============================================================
 # SETTINGS
@@ -182,6 +183,84 @@ print(
             "Profit Factor": "{:.2f}".format,
         },
     )
+)
+
+# ============================================================
+# 10. OUT-OF-SAMPLE VALIDATION
+# ============================================================
+
+VALIDATION_LOOKBACK = 15
+
+validation = run_out_of_sample_test(
+    data,
+    lookback=VALIDATION_LOOKBACK,
+    initial_capital=INITIAL_CAPITAL,
+    transaction_cost=TRANSACTION_COST,
+    slippage=SLIPPAGE,
+    train_ratio=0.70,
+)
+
+is_performance = (
+    validation["in_sample"]["performance"]
+)
+
+is_trades = (
+    validation["in_sample"]["trades"]
+)
+
+oos_performance = (
+    validation["out_of_sample"]["performance"]
+)
+
+oos_trades = (
+    validation["out_of_sample"]["trades"]
+)
+
+
+print()
+print("Out-of-Sample Validation")
+print("--------------------")
+
+print(
+    f"In-Sample CAGR       : "
+    f"{is_performance['cagr']:.2%}"
+)
+
+print(
+    f"In-Sample Sharpe     : "
+    f"{is_performance['sharpe']:.2f}"
+)
+
+print(
+    f"In-Sample Drawdown   : "
+    f"{is_performance['max_drawdown']:.2%}"
+)
+
+print(
+    f"In-Sample Trades     : "
+    f"{is_trades['completed_trades']}"
+)
+
+print()
+
+print(
+    f"Out-of-Sample CAGR   : "
+    f"{oos_performance['cagr']:.2%}"
+)
+
+print(
+    f"Out-of-Sample Sharpe : "
+    f"{oos_performance['sharpe']:.2f}"
+)
+
+print(
+    f"Out-of-Sample DD     : "
+    f"{oos_performance['max_drawdown']:.2%}"
+)
+
+print(
+    f"Out-of-Sample Trades : "
+    f"{oos_trades['completed_trades']}"
 )
 
 # ============================================================
