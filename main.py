@@ -583,6 +583,26 @@ average_trade_return = (
 )
 
 # ============================================================
+# 25. PROFIT FACTOR
+# ============================================================
+
+gross_profit = trade_returns[
+    trade_returns > 0
+].sum()
+
+gross_loss = abs(
+    trade_returns[
+        trade_returns < 0
+    ].sum()
+)
+
+profit_factor = (
+    gross_profit / gross_loss
+    if gross_loss > 0
+    else float("inf")
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -698,6 +718,21 @@ print(
 print(
     f"Average Trade Return  : "
     f"{average_trade_return:.2%}"
+)
+
+print(
+    f"Gross Profit          : "
+    f"{gross_profit:.2%}"
+)
+
+print(
+    f"Gross Loss            : "
+    f"{gross_loss:.2%}"
+)
+
+print(
+    f"Profit Factor         : "
+    f"{profit_factor:.2f}"
 )
 
 print()
