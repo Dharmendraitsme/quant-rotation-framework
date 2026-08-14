@@ -516,6 +516,73 @@ gold_max_drawdown = gold_drawdown.min()
 balanced_max_drawdown = balanced_drawdown.min()
 
 # ============================================================
+# 24. TRADE ANALYSIS
+# ============================================================
+
+# A trade starts when the strategy changes from one position
+# to another.
+
+trade_changes = data[
+    data["held_position"].ne(
+        data["held_position"].shift()
+    )
+].copy()
+
+
+# Remove the initial position (0)
+trade_changes = trade_changes[
+    trade_changes["held_position"] != 0
+]
+
+
+# Calculate the return of each completed holding period
+
+trade_returns = []
+
+for i in range(len(trade_changes) - 1):
+
+    start_index = trade_changes.index[i]
+    end_index = trade_changes.index[i + 1]
+
+    trade_return = (
+        data.loc[
+            start_index:end_index,
+            "strategy_return_after_cost"
+        ]
+        + 1
+    ).prod() - 1
+
+    trade_returns.append(trade_return)
+
+
+trade_returns = pd.Series(trade_returns)
+
+
+# Trade statistics
+
+completed_trades = len(trade_returns)
+
+winning_trades = (
+    trade_returns > 0
+).sum()
+
+losing_trades = (
+    trade_returns < 0
+).sum()
+
+win_rate = (
+    winning_trades / completed_trades
+    if completed_trades > 0
+    else 0
+)
+
+average_trade_return = (
+    trade_returns.mean()
+    if completed_trades > 0
+    else 0
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -603,6 +670,35 @@ print(
     f"{max_drawdown_duration} trading days"
 )
 
+
+print()
+print("Trade Analysis")
+print("--------------------")
+
+print(
+    f"Completed Trades      : "
+    f"{completed_trades}"
+)
+
+print(
+    f"Winning Trades        : "
+    f"{winning_trades}"
+)
+
+print(
+    f"Losing Trades         : "
+    f"{losing_trades}"
+)
+
+print(
+    f"Win Rate              : "
+    f"{win_rate:.2%}"
+)
+
+print(
+    f"Average Trade Return  : "
+    f"{average_trade_return:.2%}"
+)
 
 print()
 print("Benchmarks")
