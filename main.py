@@ -632,6 +632,31 @@ expectancy = (
 )
 
 # ============================================================
+# 27. AVERAGE HOLDING PERIOD
+# ============================================================
+
+holding_periods = []
+
+for i in range(len(trade_changes) - 1):
+
+    start_index = trade_changes.index[i]
+    end_index = trade_changes.index[i + 1]
+
+    holding_days = (
+        data.loc[end_index, "time"]
+        - data.loc[start_index, "time"]
+    ).days
+
+    holding_periods.append(holding_days)
+
+
+average_holding_period = (
+    sum(holding_periods) / len(holding_periods)
+    if holding_periods
+    else 0
+)
+
+# ============================================================
 # 21. RESULTS
 # ============================================================
 
@@ -777,6 +802,11 @@ print(
 print(
     f"Trade Expectancy      : "
     f"{expectancy:.2%}"
+)
+
+print(
+    f"Average Holding Period: "
+    f"{average_holding_period:.1f} calendar days"
 )
 
 print()
