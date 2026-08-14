@@ -18,6 +18,11 @@ from src.regime import (
     classify_market_regime,
     analyze_regimes,
 )
+from src.visualization import (
+    plot_equity_curves,
+    plot_strategy_drawdown,
+    plot_robustness,
+)
 from src.trade_analysis import analyze_trades
 from src.robustness import run_robustness_test
 from src.validation import run_out_of_sample_test
@@ -337,6 +342,25 @@ save_results(
     robustness_results=robustness_results,
     validation=validation,
     regime_results=regime_results,
+)
+
+# ============================================================
+# 10. VISUALIZATION
+# ============================================================
+
+plot_equity_curves(
+    strategy_equity=data["equity"],
+    nifty_equity=nifty_benchmark["equity"],
+    gold_equity=gold_benchmark["equity"],
+    balanced_equity=balanced_benchmark["equity"],
+)
+
+plot_strategy_drawdown(
+    strategy_equity=data["equity"],
+)
+
+plot_robustness(
+    robustness_results=robustness_results,
 )
 
 # ============================================================
