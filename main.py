@@ -229,6 +229,7 @@ save_results(
 # ============================================================
 
 plot_equity_curves(
+    dates=data["time"],
     strategy_equity=data["equity"],
     nifty_equity=nifty_benchmark["equity"],
     gold_equity=gold_benchmark["equity"],
@@ -236,6 +237,7 @@ plot_equity_curves(
 )
 
 plot_strategy_drawdown(
+    dates=data["time"],
     strategy_equity=data["equity"],
 )
 

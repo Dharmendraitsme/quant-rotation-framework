@@ -5,19 +5,45 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 
 RESULTS_DIR = Path("results")
 
 
+def _prepare_dates(dates, length):
+    """Convert dates to datetime and align with equity length."""
+
+    dates = dates.iloc[:length].copy()
+
+    return dates
+
+
+def _format_date_axis():
+    """Format chart x-axis using readable calendar dates."""
+
+    ax = plt.gca()
+
+    ax.xaxis.set_major_locator(
+        mdates.AutoDateLocator()
+    )
+
+    ax.xaxis.set_major_formatter(
+        mdates.DateFormatter("%Y")
+    )
+
+    plt.xticks(rotation=45)
+
+
 def plot_equity_curves(
+    dates,
     strategy_equity,
     nifty_equity,
     gold_equity,
     balanced_equity,
 ):
     """
-    Plot normalized equity curves.
+    Plot normalized equity curves using actual dates.
     """
 
     RESULTS_DIR.mkdir(
@@ -25,29 +51,46 @@ def plot_equity_curves(
         exist_ok=True,
     )
 
+    length = min(
+        len(dates),
+        len(strategy_equity),
+        len(nifty_equity),
+        len(gold_equity),
+        len(balanced_equity),
+    )
+
+    dates = _prepare_dates(
+        dates,
+        length,
+    )
+
     plt.figure(figsize=(12, 6))
 
     plt.plot(
-        strategy_equity.index,
-        strategy_equity / strategy_equity.iloc[0],
+        dates,
+        strategy_equity.iloc[:length]
+        / strategy_equity.iloc[0],
         label="Rotation Strategy",
     )
 
     plt.plot(
-        nifty_equity.index,
-        nifty_equity / nifty_equity.iloc[0],
+        dates,
+        nifty_equity.iloc[:length]
+        / nifty_equity.iloc[0],
         label="NIFTYBEES",
     )
 
     plt.plot(
-        gold_equity.index,
-        gold_equity / gold_equity.iloc[0],
+        dates,
+        gold_equity.iloc[:length]
+        / gold_equity.iloc[0],
         label="GOLDBEES",
     )
 
     plt.plot(
-        balanced_equity.index,
-        balanced_equity / balanced_equity.iloc[0],
+        dates,
+        balanced_equity.iloc[:length]
+        / balanced_equity.iloc[0],
         label="50/50",
     )
 
@@ -57,6 +100,8 @@ def plot_equity_curves(
 
     plt.xlabel("Date")
     plt.ylabel("Growth of ₹1")
+
+    _format_date_axis()
 
     plt.legend()
     plt.grid(True)
@@ -72,10 +117,11 @@ def plot_equity_curves(
 
 
 def plot_strategy_drawdown(
+    dates,
     strategy_equity,
 ):
     """
-    Plot strategy drawdown.
+    Plot strategy drawdown using actual dates.
     """
 
     RESULTS_DIR.mkdir(
@@ -83,12 +129,26 @@ def plot_strategy_drawdown(
         exist_ok=True,
     )
 
+    length = min(
+        len(dates),
+        len(strategy_equity),
+    )
+
+    dates = _prepare_dates(
+        dates,
+        length,
+    )
+
+    equity = (
+        strategy_equity.iloc[:length]
+    )
+
     running_max = (
-        strategy_equity.cummax()
+        equity.cummax()
     )
 
     drawdown = (
-        strategy_equity
+        equity
         / running_max
         - 1
     )
@@ -96,7 +156,7 @@ def plot_strategy_drawdown(
     plt.figure(figsize=(12, 5))
 
     plt.plot(
-        drawdown.index,
+        dates,
         drawdown,
         label="Strategy Drawdown",
     )
@@ -107,6 +167,8 @@ def plot_strategy_drawdown(
 
     plt.xlabel("Date")
     plt.ylabel("Drawdown")
+
+    _format_date_axis()
 
     plt.legend()
     plt.grid(True)
